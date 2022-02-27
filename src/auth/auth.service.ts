@@ -3,10 +3,20 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { AuthDto } from './dto';
 import * as argon from 'argon2';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+
+type token = {
+  access_token: string;
+};
 
 @Injectable({})
 export class AuthService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwt: JwtService,
+    private readonly config: ConfigService,
+  ) {}
   //****metodo signup****
   async signup(dto: AuthDto) {
     //creamos el hash de la contraseña
@@ -22,7 +32,6 @@ export class AuthService {
       });
       //despues de guardar al usuario borramos el hash para que no se muestre en la respuesta
       delete user.hash;
-      return user;
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
         if (error.code === 'P2002') {
@@ -50,8 +59,27 @@ export class AuthService {
     if (!pwMatch) {
       throw new ForbiddenException('Invalid credentials');
     }
-    //si todo es correcto borramos el hash y mostramos el usuario
+    //si todo es correcto borramos el hash
+    //y llamamos al metodo ***signToken*** para generar y devolver el token
     delete user.hash;
-    return user;
+    return this.signToken(user.id, user.email);
+  }
+
+  //****metodo signToken ****
+  // convertimos la informacion del usuario en un token (jwt)
+  async signToken(userID: number, email: string): Promise<token> {
+    //le pasamos la informacion en un payload
+    const payload = {
+      sub: userID,
+      email,
+    };
+    //buscamos la clave secreta que tenemos en .env
+    const secret = this.config.get('JWT_SECRET');
+    //le pasamos el payload y la clave secreta para generar el token
+    const token = this.jwt.sign(payload, {
+      expiresIn: '1d',
+      secret,
+    });
+    return { access_token: token };
   }
 }
