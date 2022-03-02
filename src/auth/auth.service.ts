@@ -60,8 +60,8 @@ export class AuthService {
       throw new ForbiddenException('Invalid credentials');
     }
     //si todo es correcto borramos el hash
-    //y llamamos al metodo ***signToken*** para generar y devolver el token
     delete user.hash;
+    //y llamamos al metodo ***signToken*** para generar y devolver el token
     return this.signToken(user.id, user.email);
   }
 
@@ -75,11 +75,12 @@ export class AuthService {
     };
     //buscamos la clave secreta que tenemos en .env
     const secret = this.config.get('JWT_SECRET');
-    //le pasamos el payload y la clave secreta para generar el token
+    //le pasamos el payload y como segundo argumento en un objeto le pasamos el tiempo de expiracion del token y la clave secreta para generar el token
     const token = this.jwt.sign(payload, {
       expiresIn: '1d',
       secret,
     });
+    //finalmente retornamos el token que llegara hasta el controlador para que lo pueda guardar en la respuesta
     return { access_token: token };
   }
 }
