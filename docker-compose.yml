@@ -1,13 +1,17 @@
 version: '3.8'
 services:
   dev-db:
-    image: postgres:13
+    image: mysql:5.7
+    restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 123
-      POSTGRES_DB: nest
+      MYSQL_DATABASE: nest-api
+      MYSQL_USER: api 
+      MYSQL_PASSWORD: 1234 
+      MYSQL_ROOT_PASSWORD: 1234       
     ports:
-      - 5434:5432
+      - 3306:3306
+    expose:
+      - 3306
     networks:
       - freecodecamp
 networks:
